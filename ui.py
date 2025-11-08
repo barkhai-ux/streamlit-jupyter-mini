@@ -103,24 +103,6 @@ df.head()"""
                     help="Download processed data"
                 )
         
-        st.markdown("---")
-        
-        with st.expander("❓ Need Help?"):
-            st.markdown("""
-            **How to use this notebook:**
-            
-            1. **Upload** your data file
-            2. **Select** a template from categories
-            3. **Click** 'Add to Notebook'
-            4. **Edit** the code if needed
-            5. **Click** ▶️ Run to execute
-            6. **Download** your results
-            
-            **Tips:**
-            - Change column names in the code to match your data
-            - Run cells from top to bottom
-            - Each cell remembers previous results
-            """)
 
 
 def render_cell(cell, idx):
