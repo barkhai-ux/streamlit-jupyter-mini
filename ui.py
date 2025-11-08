@@ -257,34 +257,3 @@ def render_header():
                 st.rerun()
 
 
-def render_footer():
-    """Render the footer with stats and tips"""
-    st.markdown("---")
-    if st.session_state.df is not None or st.session_state.cells:
-        cols = []
-        if st.session_state.df is not None:
-            cols = st.columns(4)
-            cols[0].metric("📊 Rows", f"{len(st.session_state.df):,}")
-            cols[1].metric("📋 Columns", len(st.session_state.df.columns))
-            cols[2].metric("📝 Cells", len(st.session_state.cells))
-            cols[3].metric("▶️ Executions", st.session_state.execution_count)
-        else:
-            cols = st.columns(2)
-            cols[0].metric("📝 Cells", len(st.session_state.cells))
-            cols[1].metric("▶️ Executions", st.session_state.execution_count)
-
-    st.markdown("---")
-    st.markdown("""
-    <div style='background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin-top: 2rem;'>
-        <h4 style='margin-top: 0; color: #24292e;'>💡 Quick Tips for Beginners</h4>
-        <ul style='margin-bottom: 0;'>
-            <li><strong>Column Names:</strong> Always replace 'column_name' in templates with your actual column name</li>
-            <li><strong>Run Order:</strong> Execute cells from top to bottom - each cell uses results from cells above it</li>
-            <li><strong>See Your Columns:</strong> Check the sidebar "View Column Names" to see what's available in your data</li>
-            <li><strong>Experiment:</strong> Don't worry about breaking things - you can always delete cells and start over!</li>
-            <li><strong>Get Help:</strong> Comments in code (lines starting with #) explain what each line does</li>
-            <li><strong>Run All:</strong> Use the "Run All" button to execute all cells in order</li>
-        </ul>
-    </div>
-    """, unsafe_allow_html=True)
-
