@@ -11,5 +11,4 @@ initialize_session_state()
 render_header()
 render_sidebar()
 render_main_content()
-render_footer()
 
