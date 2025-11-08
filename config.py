@@ -1,11 +1,5 @@
-"""
-Configuration file for the Data Analysis Notebook
-Contains CSS styles, code templates, and page configuration
-"""
-
 import streamlit as st
 
-# Custom CSS - Clean, professional, beginner-friendly
 CUSTOM_CSS = """
 <style>
     /* Global styles */
@@ -376,7 +370,6 @@ def initialize_session_state():
         st.session_state.execution_count = 0
 
 
-# Beginner-friendly code templates with explanations
 CODE_TEMPLATES = {
     "📂 Load Data": {
         "Load CSV File": {

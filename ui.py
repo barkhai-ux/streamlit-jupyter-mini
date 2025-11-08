@@ -1,8 +1,3 @@
-"""
-UI components for the Data Analysis Notebook
-Handles sidebar, cell rendering, and user interface
-"""
-
 import streamlit as st
 import pandas as pd
 from cell_manager import add_cell, delete_cell, execute_cell
@@ -11,12 +6,10 @@ from config import CODE_TEMPLATES
 
 
 def render_sidebar():
-    """Render the sidebar with file upload, templates, and export options"""
     with st.sidebar:
-        st.title("🎯 Quick Start")
+        st.title("Quick Start")
         
         st.markdown("### 📁 Step 1: Upload Data")
-        # Data upload section
         uploaded_file = st.file_uploader(
             "Choose your file", 
             type=['csv', 'xlsx', 'xls'], 
@@ -32,12 +25,10 @@ def render_sidebar():
                 
                 st.success(f"✅ Loaded: {st.session_state.df.shape[0]} rows × {st.session_state.df.shape[1]} columns")
                 
-                # Show column info
                 with st.expander("📋 View Column Names"):
                     for col in st.session_state.df.columns:
                         st.text(f"• {col}")
                 
-                # Add initial exploration cell if not already added
                 if not st.session_state.file_loaded:
                     file_code = f"""# Your data has been loaded!
 # Rows: {st.session_state.df.shape[0]}, Columns: {st.session_state.df.shape[1]}
@@ -56,7 +47,6 @@ df.head()"""
         
         st.markdown("---")
         
-        # Code templates
         st.markdown("### 📚 Step 2: Add Code")
         st.markdown("Choose a template to add to your notebook:")
         
@@ -74,7 +64,6 @@ df.head()"""
                 help="Pick a specific operation"
             )
             
-            # Show description
             if selected_template:
                 template_info = CODE_TEMPLATES[template_category][selected_template]
                 st.info(f"ℹ️ {template_info['description']}")
@@ -86,7 +75,6 @@ df.head()"""
         
         st.markdown("---")
         
-        # Export section
         st.markdown("### 💾 Step 3: Save Work")
         
         col1, col2 = st.columns(2)
@@ -117,7 +105,6 @@ df.head()"""
         
         st.markdown("---")
         
-        # Help section
         with st.expander("❓ Need Help?"):
             st.markdown("""
             **How to use this notebook:**
@@ -140,7 +127,6 @@ def render_cell(cell, idx):
     """Render a single notebook cell"""
     st.markdown('<div class="notebook-cell">', unsafe_allow_html=True)
     
-    # Cell header
     exec_count = f"[{cell.get('execution_count', '')}]" if cell.get('execution_count') else "[ ]"
     st.markdown(f'''
         <div class="cell-header">
@@ -151,7 +137,6 @@ def render_cell(cell, idx):
         </div>
     ''', unsafe_allow_html=True)
     
-    # Cell controls
     st.markdown('<div class="cell-controls">', unsafe_allow_html=True)
     col1, col2, col3, col4, col5 = st.columns([2, 2, 2, 2, 6])
     
@@ -162,7 +147,6 @@ def render_cell(cell, idx):
     
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # Cell content - Code editor
     st.markdown('<div class="cell-content">', unsafe_allow_html=True)
     
     cell_code = st.text_area(
@@ -174,45 +158,36 @@ def render_cell(cell, idx):
         help="Edit your Python code here"
     )
     
-    # Update cell content
     cell['content'] = cell_code
     
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # Cell output
     if cell['executed']:
         st.markdown('<div class="cell-output">', unsafe_allow_html=True)
         
-        # Display stored DataFrame
         if cell.get('dataframe') is not None:
             st.dataframe(cell['dataframe'], use_container_width=True)
         
-        # Display stored Series
         if cell.get('series') is not None:
             st.dataframe(cell['series'], use_container_width=True)
         
-        # Display stored figure (only if not already displayed via st.plotly_chart in code)
         if cell.get('figure') is not None and 'st.plotly_chart' not in cell.get('content', ''):
             try:
                 st.plotly_chart(cell['figure'], use_container_width=True)
             except Exception as plot_error:
                 st.warning(f"⚠️ Could not display chart: {plot_error}")
         
-        # Display printed output
         if cell.get('output'):
             st.text(cell['output'])
         elif cell.get('dataframe') is None and cell.get('series') is None and cell.get('figure') is None:
-            # Only show success message if there's no other output
             st.markdown('<div class="success-msg">✓ Executed successfully</div>', unsafe_allow_html=True)
         
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # Display errors
     if cell.get('error'):
         st.markdown('<div class="cell-output">', unsafe_allow_html=True)
         error_msg = cell['error']
         if cell.get('error_traceback'):
-            # Show full traceback in expander for debugging
             with st.expander("🔍 Full Error Details", expanded=False):
                 st.code(cell['error_traceback'], language='python')
         st.markdown(f'<div class="error-msg">❌ <strong>Error:</strong><br>{error_msg}</div>', unsafe_allow_html=True)
@@ -221,7 +196,6 @@ def render_cell(cell, idx):
     
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # Handle button actions
     if run_btn:
         execute_cell(cell['id'], cell_code)
         st.rerun()
@@ -247,16 +221,13 @@ def render_main_content():
     if not st.session_state.cells:
         st.markdown('<div class="help-text">👋 <strong>Welcome!</strong> Get started by uploading data in the sidebar, then add your first code cell using the templates.</div>', unsafe_allow_html=True)
         
-        # Add starter cell button
         if st.button("➕ Add Your First Cell", type="primary"):
             add_cell()
             st.rerun()
     else:
-        # Render all cells
         for idx, cell in enumerate(st.session_state.cells):
             render_cell(cell, idx)
         
-        # Add cell button at the bottom
         st.markdown("---")
         if st.button("➕ Add New Cell at Bottom", type="secondary", use_container_width=False):
             add_cell()
