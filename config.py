@@ -373,7 +373,7 @@ def initialize_session_state():
 CODE_TEMPLATES = {
     "📂 Load Data": {
         "Load CSV File": {
-            "code": "# Load data from CSV file\ndf = pd.read_csv('your_file.csv')\n\n# Show first 5 rows\nprint(f'✓ Loaded {len(df)} rows and {len(df.columns)} columns')\ndf.head()",
+            "code": "df = pd.read_csv('your_file.csv')\n\n print(f'✓ Loaded {len(df)} rows and {len(df.columns)} columns')\ndf.head()",
             "description": "Load your data from a CSV file and preview it"
         },
         "Load Excel File": {
