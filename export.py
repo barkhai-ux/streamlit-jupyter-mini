@@ -43,8 +43,8 @@ def export_to_ipynb():
             original_content = content
 
             # Fix stuck comments and code (adds newlines between comments and code)
-            content = re.sub(r'(?<=#[^\n]{1,200})#', '\n#', content)  # separate chained comments (limit lookbehind)
-            content = re.sub(r'(#[^\n]+?)((?:^|(?<!\w))(?:[A-Za-z_]|df|st|print)\w*\s*(?:=|\())', r'\1\n\2', content)  # newline before code
+            content = re.sub(r'(#[^\n]+?)(\s*)#', r'\1\n#', content)  # separate chained comments
+            content = re.sub(r'(#[^\n]+?)((?:[A-Za-z_]|df|st|print)\w*\s*(?:=|\())', r'\1\n\2', content)  # newline before code
 
             # Heuristic check for mostly concatenated content
             newline_count = content.count('\n')
