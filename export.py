@@ -47,6 +47,9 @@ def export_to_ipynb():
                 content = re.sub(r'(\.head\(\)\s*)([a-zA-Z_])', r'\1\n\2', content)
                 content = re.sub(r'(\.tail\(\)\s*)([a-zA-Z_])', r'\1\n\2', content)
                 content = re.sub(r'(\.describe\(\)\s*)([a-zA-Z_])', r'\1\n\2', content)
+                content = re.sub(r'#([^\n#]+)(?=#)', r'#\1\n', content)
+                content = re.sub(r'(#.*?)(?=[A-Za-z_]|df|st|print|\()', r'\1\n', content)
+
 
             source_lines = content.split('\n')
             source = [line if line is not None else '' for line in source_lines]
