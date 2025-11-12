@@ -2,9 +2,8 @@ import streamlit as st
 import json
 import re
 
-
 def export_to_ipynb():
-    """Export notebook to .ipynb format with execution counts and outputs"""
+    """Export Streamlit session cells to a .ipynb notebook format"""
     notebook = {
         "cells": [],
         "metadata": {
@@ -29,49 +28,33 @@ def export_to_ipynb():
             # Normalize line endings
             content = content.replace('\r\n', '\n').replace('\r', '\n')
 
-            # 🔧 Fix stuck comments and code (adds newlines between comments and code)
-            content = re.sub(r'(?<=#.*?)#', '\n#', content)  # separate chained comments
+            # 🔧 Fix chained comments and code separation safely
+            content = re.sub(r'#([^#\n]+)#', r'#\1\n#', content)  # split chained comments
             content = re.sub(r'(#.*?)((?:[A-Za-z_]|df|st|print|\())', r'\1\n\2', content)  # newline before code
 
             # Heuristic check for mostly concatenated content
             newline_count = content.count('\n')
-            is_mostly_concatenated = (
-                (newline_count == 0 and len(content) > 50)
-                or (newline_count > 0 and newline_count < len(content) / 100)
-            )
+            is_mostly_concatenated = (newline_count == 0 and len(content) > 50) or \
+                                     (newline_count > 0 and newline_count < len(content) / 100)
 
             if is_mostly_concatenated:
-                content = re.sub(r'(#\s*[^#\n]+?)([a-zA-Z_][a-zA-Z0-9_]*\s*=)', r'\1\n\2', content)
-                content = re.sub(r'(#\s*[^#\n]+?)(print\s*\()', r'\1\n\2', content)
-                content = re.sub(r'(#\s*[^#\n]+?)(df\.)', r'\1\n\2', content)
-                content = re.sub(r'(#\s*[^#\n]+?)(filtered\s*=)', r'\1\n\2', content)
-                content = re.sub(r'(#\s*[^#\n]+?)(st\.)', r'\1\n\2', content)
-
+                # Add newlines between assignments, print, df, st calls, etc.
                 content = re.sub(r'([a-zA-Z_][a-zA-Z0-9_]*\s*=\s*[^=]+?)([a-zA-Z_][a-zA-Z0-9_]*\s*=)', r'\1\n\2', content)
                 content = re.sub(r'([a-zA-Z_][a-zA-Z0-9_]*\s*=\s*[^=]+?)(print\s*\()', r'\1\n\2', content)
                 content = re.sub(r'([a-zA-Z_][a-zA-Z0-9_]*\s*=\s*[^=]+?)(df\.)', r'\1\n\2', content)
-                
                 content = re.sub(r'(\)\s*)(print\s*\()', r'\1\n\2', content)
                 content = re.sub(r'(\)\s*)(df\.)', r'\1\n\2', content)
-                content = re.sub(r'(\)\s*)(filtered\.)', r'\1\n\2', content)
-                
                 content = re.sub(r'(\.head\(\)\s*)([a-zA-Z_])', r'\1\n\2', content)
                 content = re.sub(r'(\.tail\(\)\s*)([a-zA-Z_])', r'\1\n\2', content)
                 content = re.sub(r'(\.describe\(\)\s*)([a-zA-Z_])', r'\1\n\2', content)
-                
-                content = re.sub(r'(["\']\s*)([a-zA-Z_][a-zA-Z0-9_]*\s*=)', r'\1\n\2', content)
-                content = re.sub(r'(print\([^)]*\)\s*)(print\s*\()', r'\1\n\2', content)
-                content = re.sub(r'(df\[[^\]]+\]\s*)([a-zA-Z_])', r'\1\n\2', content)
-            
-            # Split into lines for JSON structure
+
             source_lines = content.split('\n')
             source = [line if line is not None else '' for line in source_lines]
-            
             if not source:
                 source = ['']
         else:
             source = ['']
-        
+
         nb_cell = {
             "cell_type": "code",
             "execution_count": cell.get('execution_count'),
@@ -79,8 +62,8 @@ def export_to_ipynb():
             "outputs": [],
             "source": source
         }
-        
-        # Handle execution output and errors
+
+        # Add outputs if cell was executed
         if cell.get('executed') and not cell.get('error'):
             if cell.get('output'):
                 nb_cell["outputs"].append({
@@ -110,7 +93,7 @@ def export_to_ipynb():
                 "evalue": cell['error'],
                 "traceback": cell.get('error_traceback', '').split('\n') if cell.get('error_traceback') else []
             })
-        
+
         notebook["cells"].append(nb_cell)
     
     return json.dumps(notebook, indent=2)
