@@ -1,9 +1,20 @@
 import streamlit as st
 import json
 import re
+import ast
+
+
+def is_valid_python(code):
+    """Check if code string is valid Python syntax"""
+    try:
+        ast.parse(code)
+        return True
+    except SyntaxError:
+        return False
+
 
 def export_to_ipynb():
-    """Export Streamlit session cells to a .ipynb notebook format"""
+    """Export notebook to .ipynb format with execution counts and outputs"""
     notebook = {
         "cells": [],
         "metadata": {
@@ -27,37 +38,71 @@ def export_to_ipynb():
         if content:
             # Normalize line endings
             content = content.replace('\r\n', '\n').replace('\r', '\n')
+            
+            # Store original for fallback
+            original_content = content
 
-            # 🔧 Fix chained comments and code separation safely
-            content = re.sub(r'#([^#\n]+)#', r'#\1\n#', content)  # split chained comments
-            content = re.sub(r'(#.*?)((?:[A-Za-z_]|df|st|print|\())', r'\1\n\2', content)  # newline before code
+            # Fix stuck comments and code (adds newlines between comments and code)
+            content = re.sub(r'(?<=#[^\n]{1,200})#', '\n#', content)  # separate chained comments (limit lookbehind)
+            content = re.sub(r'(#[^\n]+?)((?:^|(?<!\w))(?:[A-Za-z_]|df|st|print)\w*\s*(?:=|\())', r'\1\n\2', content)  # newline before code
 
             # Heuristic check for mostly concatenated content
             newline_count = content.count('\n')
-            is_mostly_concatenated = (newline_count == 0 and len(content) > 50) or \
-                                     (newline_count > 0 and newline_count < len(content) / 100)
+            is_mostly_concatenated = (
+                (newline_count == 0 and len(content) > 50)
+                or (newline_count > 0 and newline_count < len(content) / 100)
+            )
 
             if is_mostly_concatenated:
-                # Add newlines between assignments, print, df, st calls, etc.
-                content = re.sub(r'([a-zA-Z_][a-zA-Z0-9_]*\s*=\s*[^=]+?)([a-zA-Z_][a-zA-Z0-9_]*\s*=)', r'\1\n\2', content)
-                content = re.sub(r'([a-zA-Z_][a-zA-Z0-9_]*\s*=\s*[^=]+?)(print\s*\()', r'\1\n\2', content)
-                content = re.sub(r'([a-zA-Z_][a-zA-Z0-9_]*\s*=\s*[^=]+?)(df\.)', r'\1\n\2', content)
+                # Comment followed by code patterns
+                content = re.sub(r'(#\s*[^#\n]+?)(\s+)([a-zA-Z_][a-zA-Z0-9_]*\s*=)', r'\1\n\3', content)
+                content = re.sub(r'(#\s*[^#\n]+?)(\s+)(print\s*\()', r'\1\n\3', content)
+                content = re.sub(r'(#\s*[^#\n]+?)(\s+)(df\.)', r'\1\n\3', content)
+                content = re.sub(r'(#\s*[^#\n]+?)(\s+)(filtered\s*=)', r'\1\n\3', content)
+                content = re.sub(r'(#\s*[^#\n]+?)(\s+)(st\.)', r'\1\n\3', content)
+
+                # Assignment followed by assignment
+                content = re.sub(r'([a-zA-Z_][a-zA-Z0-9_]*\s*=\s*(?:[^=\n](?!=))+?)(\s+)([a-zA-Z_][a-zA-Z0-9_]*\s*=)', r'\1\n\3', content)
+                
+                # Assignment followed by function calls
+                content = re.sub(r'([a-zA-Z_][a-zA-Z0-9_]*\s*=\s*[^=\n]+?)(\s+)(print\s*\()', r'\1\n\3', content)
+                content = re.sub(r'([a-zA-Z_][a-zA-Z0-9_]*\s*=\s*[^=\n]+?)(\s+)(df\.)', r'\1\n\3', content)
+                
+                # Closing paren followed by code
                 content = re.sub(r'(\)\s*)(print\s*\()', r'\1\n\2', content)
                 content = re.sub(r'(\)\s*)(df\.)', r'\1\n\2', content)
+                content = re.sub(r'(\)\s*)(filtered\.)', r'\1\n\2', content)
+                
+                # Pandas methods followed by code
                 content = re.sub(r'(\.head\(\)\s*)([a-zA-Z_])', r'\1\n\2', content)
                 content = re.sub(r'(\.tail\(\)\s*)([a-zA-Z_])', r'\1\n\2', content)
                 content = re.sub(r'(\.describe\(\)\s*)([a-zA-Z_])', r'\1\n\2', content)
-                content = re.sub(r'#([^\n#]+)(?=#)', r'#\1\n', content)
-                content = re.sub(r'(#.*?)(?=[A-Za-z_]|df|st|print|\()', r'\1\n', content)
-
-
+                
+                # String literal followed by assignment
+                content = re.sub(r'(["\']\s*)([a-zA-Z_][a-zA-Z0-9_]*\s*=)', r'\1\n\2', content)
+                
+                # Consecutive print statements
+                content = re.sub(r'(print\([^)]*\)\s*)(print\s*\()', r'\1\n\2', content)
+                
+                # DataFrame indexing followed by code
+                content = re.sub(r'(df\[[^\]]+\]\s*)([a-zA-Z_])', r'\1\n\2', content)
+            
+            # Validate the formatted code
+            if not is_valid_python(content) and is_valid_python(original_content):
+                content = original_content
+            
+            # Clean up excessive blank lines
+            content = re.sub(r'\n{3,}', '\n\n', content)
+            
+            # Split into lines for JSON structure
             source_lines = content.split('\n')
             source = [line if line is not None else '' for line in source_lines]
+            
             if not source:
                 source = ['']
         else:
             source = ['']
-
+        
         nb_cell = {
             "cell_type": "code",
             "execution_count": cell.get('execution_count'),
@@ -65,8 +110,8 @@ def export_to_ipynb():
             "outputs": [],
             "source": source
         }
-
-        # Add outputs if cell was executed
+        
+        # Handle execution output and errors
         if cell.get('executed') and not cell.get('error'):
             if cell.get('output'):
                 nb_cell["outputs"].append({
@@ -96,7 +141,7 @@ def export_to_ipynb():
                 "evalue": cell['error'],
                 "traceback": cell.get('error_traceback', '').split('\n') if cell.get('error_traceback') else []
             })
-
+        
         notebook["cells"].append(nb_cell)
     
     return json.dumps(notebook, indent=2)
