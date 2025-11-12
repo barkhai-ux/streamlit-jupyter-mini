@@ -42,9 +42,17 @@ def export_to_ipynb():
             # Store original for fallback
             original_content = content
 
-            # Fix stuck comments and code (adds newlines between comments and code)
-            content = re.sub(r'(#[^\n]+?)(\s*)#', r'\1\n#', content)  # separate chained comments
-            content = re.sub(r'(#[^\n]+?)((?:[A-Za-z_]|df|st|print)\w*\s*(?:=|\())', r'\1\n\2', content)  # newline before code
+            # Fix stuck comments: # comment1# comment2# comment3
+            # This handles cases like "# Your data has been loaded!# Rows: 900"
+            while '#' in content and content.count('#') > 1:
+                new_content = re.sub(r'(#[^#\n]+)#', r'\1\n#', content)
+                if new_content == content:  # No more changes
+                    break
+                content = new_content
+            
+            # Fix comment immediately followed by code (no space)
+            # Handles: "# Show first 5 rowsdf.head()"
+            content = re.sub(r'(#[^\n]+)([a-zA-Z_])', r'\1\n\2', content)
 
             # Heuristic check for mostly concatenated content
             newline_count = content.count('\n')
@@ -55,37 +63,37 @@ def export_to_ipynb():
 
             if is_mostly_concatenated:
                 # Comment followed by code patterns
-                content = re.sub(r'(#\s*[^#\n]+?)(\s+)([a-zA-Z_][a-zA-Z0-9_]*\s*=)', r'\1\n\3', content)
-                content = re.sub(r'(#\s*[^#\n]+?)(\s+)(print\s*\()', r'\1\n\3', content)
-                content = re.sub(r'(#\s*[^#\n]+?)(\s+)(df\.)', r'\1\n\3', content)
-                content = re.sub(r'(#\s*[^#\n]+?)(\s+)(filtered\s*=)', r'\1\n\3', content)
-                content = re.sub(r'(#\s*[^#\n]+?)(\s+)(st\.)', r'\1\n\3', content)
+                content = re.sub(r'(#[^\n]+)\s+([a-zA-Z_][a-zA-Z0-9_]*\s*=)', r'\1\n\2', content)
+                content = re.sub(r'(#[^\n]+)\s+(print\s*\()', r'\1\n\2', content)
+                content = re.sub(r'(#[^\n]+)\s+(df\.)', r'\1\n\2', content)
+                content = re.sub(r'(#[^\n]+)\s+(filtered\s*=)', r'\1\n\2', content)
+                content = re.sub(r'(#[^\n]+)\s+(st\.)', r'\1\n\2', content)
 
                 # Assignment followed by assignment
-                content = re.sub(r'([a-zA-Z_][a-zA-Z0-9_]*\s*=\s*(?:[^=\n](?!=))+?)(\s+)([a-zA-Z_][a-zA-Z0-9_]*\s*=)', r'\1\n\3', content)
+                content = re.sub(r'([a-zA-Z_][a-zA-Z0-9_]*\s*=\s*[^=\n]+)\s+([a-zA-Z_][a-zA-Z0-9_]*\s*=)', r'\1\n\2', content)
                 
                 # Assignment followed by function calls
-                content = re.sub(r'([a-zA-Z_][a-zA-Z0-9_]*\s*=\s*[^=\n]+?)(\s+)(print\s*\()', r'\1\n\3', content)
-                content = re.sub(r'([a-zA-Z_][a-zA-Z0-9_]*\s*=\s*[^=\n]+?)(\s+)(df\.)', r'\1\n\3', content)
+                content = re.sub(r'([a-zA-Z_][a-zA-Z0-9_]*\s*=\s*[^=\n]+)\s+(print\s*\()', r'\1\n\2', content)
+                content = re.sub(r'([a-zA-Z_][a-zA-Z0-9_]*\s*=\s*[^=\n]+)\s+(df\.)', r'\1\n\2', content)
                 
                 # Closing paren followed by code
-                content = re.sub(r'(\)\s*)(print\s*\()', r'\1\n\2', content)
-                content = re.sub(r'(\)\s*)(df\.)', r'\1\n\2', content)
-                content = re.sub(r'(\)\s*)(filtered\.)', r'\1\n\2', content)
+                content = re.sub(r'(\))\s+(print\s*\()', r'\1\n\2', content)
+                content = re.sub(r'(\))\s+(df\.)', r'\1\n\2', content)
+                content = re.sub(r'(\))\s+(filtered\.)', r'\1\n\2', content)
                 
                 # Pandas methods followed by code
-                content = re.sub(r'(\.head\(\)\s*)([a-zA-Z_])', r'\1\n\2', content)
-                content = re.sub(r'(\.tail\(\)\s*)([a-zA-Z_])', r'\1\n\2', content)
-                content = re.sub(r'(\.describe\(\)\s*)([a-zA-Z_])', r'\1\n\2', content)
+                content = re.sub(r'(\.head\(\))\s+([a-zA-Z_])', r'\1\n\2', content)
+                content = re.sub(r'(\.tail\(\))\s+([a-zA-Z_])', r'\1\n\2', content)
+                content = re.sub(r'(\.describe\(\))\s+([a-zA-Z_])', r'\1\n\2', content)
                 
                 # String literal followed by assignment
-                content = re.sub(r'(["\']\s*)([a-zA-Z_][a-zA-Z0-9_]*\s*=)', r'\1\n\2', content)
+                content = re.sub(r'(["\'])\s+([a-zA-Z_][a-zA-Z0-9_]*\s*=)', r'\1\n\2', content)
                 
                 # Consecutive print statements
-                content = re.sub(r'(print\([^)]*\)\s*)(print\s*\()', r'\1\n\2', content)
+                content = re.sub(r'(print\([^)]*\))\s+(print\s*\()', r'\1\n\2', content)
                 
                 # DataFrame indexing followed by code
-                content = re.sub(r'(df\[[^\]]+\]\s*)([a-zA-Z_])', r'\1\n\2', content)
+                content = re.sub(r'(df\[[^\]]+\])\s+([a-zA-Z_])', r'\1\n\2', content)
             
             # Validate the formatted code
             if not is_valid_python(content) and is_valid_python(original_content):
