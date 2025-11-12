@@ -26,26 +26,20 @@ def export_to_ipynb():
         content = cell.get('content', '')
 
         if content:
-            # Normalize newlines
+            # Normalize line endings
             content = content.replace('\r\n', '\n').replace('\r', '\n')
 
-            # Decode escaped newlines (e.g., "\\n" → actual newlines)
-            if "\\n" in content:
-                try:
-                    content = content.encode('utf-8').decode('unicode_escape')
-                except Exception:
-                    content = content.replace("\\n", "\n")
+            # 🔧 Fix stuck comments and code (adds newlines between comments and code)
+            content = re.sub(r'(?<=#.*?)#', '\n#', content)  # separate chained comments
+            content = re.sub(r'(#.*?)((?:[A-Za-z_]|df|st|print|\())', r'\1\n\2', content)  # newline before code
 
-            # 🔧 Fix: Add missing newline between comment and code if glued together
-            content = re.sub(r'(#.*?)((?:[A-Za-z_]|df|st|print|\())', r'\1\n\2', content)
-
-            # Heuristic check for overly concatenated content
+            # Heuristic check for mostly concatenated content
             newline_count = content.count('\n')
             is_mostly_concatenated = (
                 (newline_count == 0 and len(content) > 50)
                 or (newline_count > 0 and newline_count < len(content) / 100)
             )
-            
+
             if is_mostly_concatenated:
                 content = re.sub(r'(#\s*[^#\n]+?)([a-zA-Z_][a-zA-Z0-9_]*\s*=)', r'\1\n\2', content)
                 content = re.sub(r'(#\s*[^#\n]+?)(print\s*\()', r'\1\n\2', content)
@@ -69,9 +63,10 @@ def export_to_ipynb():
                 content = re.sub(r'(print\([^)]*\)\s*)(print\s*\()', r'\1\n\2', content)
                 content = re.sub(r'(df\[[^\]]+\]\s*)([a-zA-Z_])', r'\1\n\2', content)
             
-            # Split into lines for Jupyter formatting
+            # Split into lines for JSON structure
             source_lines = content.split('\n')
             source = [line if line is not None else '' for line in source_lines]
+            
             if not source:
                 source = ['']
         else:
@@ -85,7 +80,7 @@ def export_to_ipynb():
             "source": source
         }
         
-        # Handle outputs
+        # Handle execution output and errors
         if cell.get('executed') and not cell.get('error'):
             if cell.get('output'):
                 nb_cell["outputs"].append({
