@@ -153,7 +153,7 @@ def render_cell(cell, idx):
         if cell.get('series') is not None:
             st.dataframe(cell['series'], use_container_width=True)
         
-        if cell.get('figure') is not None and 'st.plotly_chart' not in cell.get('content', ''):
+        if cell.get('figure') is not None:
             try:
                 st.plotly_chart(cell['figure'], use_container_width=True)
             except Exception as plot_error:
@@ -237,5 +237,3 @@ def render_header():
                 st.session_state.variables = {}
                 st.session_state.execution_count = 0
                 st.rerun()
-
-
