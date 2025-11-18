@@ -64,6 +64,9 @@ def execute_cell(cell_id, code):
                 sys.stdout = output_buffer
                 sys.stderr = error_buffer
                 
+                # Check if code uses st.plotly_chart
+                uses_streamlit_chart = 'st.plotly_chart' in code
+                
                 try:
                     try:
                         result = eval(code, exec_globals)
@@ -72,8 +75,10 @@ def execute_cell(cell_id, code):
                                 cell['dataframe'] = result
                             elif isinstance(result, pd.Series):
                                 cell['series'] = result
-                            elif isinstance(result, go.Figure) or hasattr(result, '_grid_ref') or (hasattr(result, '__class__') and 'plotly' in str(type(result))):
-                                cell['figure'] = result
+                            elif isinstance(result, (go.Figure, px._figure_py.Figure)) or hasattr(result, '_grid_ref'):
+                                # Only capture figure if st.plotly_chart is NOT used
+                                if not uses_streamlit_chart:
+                                    cell['figure'] = result
                             else:
                                 cell['result'] = result
                     except:
@@ -82,18 +87,21 @@ def execute_cell(cell_id, code):
                     sys.stdout = old_stdout
                     sys.stderr = old_stderr
                 
+                # Update df in session state
                 if 'df' in exec_globals:
                     st.session_state.df = exec_globals['df']
 
-                if 'st.plotly_chart' not in code:
+                # Only auto-capture figures if st.plotly_chart is NOT in the code
+                if not uses_streamlit_chart:
                     for key, value in exec_globals.items():
-                        if isinstance(value, go.Figure):
+                        if isinstance(value, (go.Figure, px._figure_py.Figure)):
                             cell['figure'] = value
                             break
-                        elif hasattr(value, '_grid_ref') or (hasattr(value, '__class__') and 'plotly' in str(type(value))):
+                        elif hasattr(value, '_grid_ref'):
                             cell['figure'] = value
                             break
                 
+                # Update variables
                 excluded_keys = {'pd', 'np', 'px', 'go', 'st', '__builtins__', 'print', '__name__', '__doc__', '__package__', '__loader__', '__spec__', '__annotations__', '__file__', '__cached__'}
                 for key, value in exec_globals.items():
                     if key not in excluded_keys and not key.startswith('_'):
@@ -118,4 +126,3 @@ def execute_cell(cell_id, code):
                 cell['execution_count'] = None
                 return False, str(e)
     return False, "Cell not found"
-
