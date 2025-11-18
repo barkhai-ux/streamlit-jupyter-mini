@@ -64,9 +64,6 @@ def execute_cell(cell_id, code):
                 sys.stdout = output_buffer
                 sys.stderr = error_buffer
                 
-                # Check if code uses st.plotly_chart
-                uses_streamlit_chart = 'st.plotly_chart' in code
-                
                 try:
                     try:
                         result = eval(code, exec_globals)
@@ -76,9 +73,7 @@ def execute_cell(cell_id, code):
                             elif isinstance(result, pd.Series):
                                 cell['series'] = result
                             elif isinstance(result, (go.Figure, px._figure_py.Figure)) or hasattr(result, '_grid_ref'):
-                                # Only capture figure if st.plotly_chart is NOT used
-                                if not uses_streamlit_chart:
-                                    cell['figure'] = result
+                                cell['figure'] = result
                             else:
                                 cell['result'] = result
                     except:
@@ -91,15 +86,14 @@ def execute_cell(cell_id, code):
                 if 'df' in exec_globals:
                     st.session_state.df = exec_globals['df']
 
-                # Only auto-capture figures if st.plotly_chart is NOT in the code
-                if not uses_streamlit_chart:
-                    for key, value in exec_globals.items():
-                        if isinstance(value, (go.Figure, px._figure_py.Figure)):
-                            cell['figure'] = value
-                            break
-                        elif hasattr(value, '_grid_ref'):
-                            cell['figure'] = value
-                            break
+                # Auto-capture any figures created in the code
+                for key, value in exec_globals.items():
+                    if isinstance(value, (go.Figure, px._figure_py.Figure)):
+                        cell['figure'] = value
+                        break
+                    elif hasattr(value, '_grid_ref'):
+                        cell['figure'] = value
+                        break
                 
                 # Update variables
                 excluded_keys = {'pd', 'np', 'px', 'go', 'st', '__builtins__', 'print', '__name__', '__doc__', '__package__', '__loader__', '__spec__', '__annotations__', '__file__', '__cached__'}
