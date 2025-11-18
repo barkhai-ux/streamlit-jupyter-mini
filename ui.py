@@ -95,10 +95,14 @@ df.head()"""
                 st.info(f"ℹ️ {template_info['description']}")
                 
                 if st.button("➕ Add to Notebook", use_container_width=True, type="primary"):
-                    add_cell(content=template_info['code'])
+                    # FIXED: Convert list to string before adding to cell
+                    code_content = template_info['code']
+                    if isinstance(code_content, list):
+                        code_content = '\n'.join(code_content)
+                    
+                    add_cell(content=code_content)
                     st.success("✅ Added to notebook!")
                     st.rerun()
-        
         st.markdown("---")
         
         st.markdown("### 💾 Step 3: Save Work")
