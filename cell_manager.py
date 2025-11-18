@@ -9,10 +9,18 @@ from io import StringIO
 
 
 def add_cell(content="# Write your code here\n", position=None):
+    # Handle both string and list content
+    if isinstance(content, list):
+        # Convert list to string for storage
+        content_str = '\n'.join(content)
+    else:
+        content_str = content
+    
     new_cell = {
         'id': st.session_state.cell_counter,
         'type': 'code',
-        'content': content,
+        'content': content_str,  # Store as string for execution
+        'content_list': content if isinstance(content, list) else content.split('\n'),  # Store list version for export
         'output': None,
         'executed': False,
         'execution_count': None,
@@ -34,9 +42,16 @@ def delete_cell(cell_id):
 
 
 def execute_cell(cell_id, code):
+    """Execute cell code - handles both string and list input"""
     for cell in st.session_state.cells:
         if cell['id'] == cell_id:
             try:
+                # Convert list to string if needed
+                if isinstance(code, list):
+                    code_str = '\n'.join(code)
+                else:
+                    code_str = code
+                
                 st.session_state.execution_count += 1
                 cell['execution_count'] = st.session_state.execution_count
                 
@@ -66,7 +81,7 @@ def execute_cell(cell_id, code):
                 
                 try:
                     try:
-                        result = eval(code, exec_globals)
+                        result = eval(code_str, exec_globals)
                         if result is not None:
                             if isinstance(result, pd.DataFrame):
                                 cell['dataframe'] = result
@@ -77,7 +92,7 @@ def execute_cell(cell_id, code):
                             else:
                                 cell['result'] = result
                     except:
-                        exec(code, exec_globals)
+                        exec(code_str, exec_globals)
                 finally:
                     sys.stdout = old_stdout
                     sys.stderr = old_stderr
