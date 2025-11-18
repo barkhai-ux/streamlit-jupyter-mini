@@ -72,7 +72,7 @@ def execute_cell(cell_id, code):
                                 cell['dataframe'] = result
                             elif isinstance(result, pd.Series):
                                 cell['series'] = result
-                            elif isinstance(result, (go.Figure, px._figure_py.Figure)) or hasattr(result, '_grid_ref'):
+                            elif isinstance(result, go.Figure) or hasattr(result, '_grid_ref') or (hasattr(result, '__class__') and 'plotly' in str(type(result)).lower()):
                                 cell['figure'] = result
                             else:
                                 cell['result'] = result
@@ -88,10 +88,10 @@ def execute_cell(cell_id, code):
 
                 # Auto-capture any figures created in the code
                 for key, value in exec_globals.items():
-                    if isinstance(value, (go.Figure, px._figure_py.Figure)):
+                    if isinstance(value, go.Figure):
                         cell['figure'] = value
                         break
-                    elif hasattr(value, '_grid_ref'):
+                    elif hasattr(value, '_grid_ref') or (hasattr(value, '__class__') and 'plotly' in str(type(value)).lower()):
                         cell['figure'] = value
                         break
                 
