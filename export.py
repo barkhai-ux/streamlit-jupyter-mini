@@ -13,6 +13,87 @@ def is_valid_python(code):
         return False
 
 
+def normalize_code_content(content):
+    """Normalize and properly format code content with correct line breaks"""
+    if not content:
+        return ['']
+    
+    # Normalize line endings first
+    content = content.replace('\r\n', '\n').replace('\r', '\n')
+    
+    # Split into lines first
+    lines = content.split('\n')
+    processed_lines = []
+    
+    for line in lines:
+        line = line.strip()
+        if not line:
+            processed_lines.append('')
+            continue
+            
+        # Handle multiple statements on one line separated by semicolons
+        if ';' in line:
+            parts = line.split(';')
+            for part in parts:
+                part = part.strip()
+                if part:
+                    processed_lines.append(part)
+            continue
+        
+        # Handle comment blocks stuck together
+        if '#' in line and line.count('#') > 1:
+            # Split multiple comments on the same line
+            comment_parts = re.split(r'(?<=[^#])#', line)
+            if len(comment_parts) > 1:
+                for i, part in enumerate(comment_parts):
+                    part = part.strip()
+                    if i == 0 and part:
+                        processed_lines.append(part)
+                    elif part:
+                        processed_lines.append('#' + part)
+                continue
+        
+        # Handle common patterns where code gets concatenated
+        patterns = [
+            # Comment immediately followed by code
+            (r'(#[^#\n]+)([a-zA-Z_][a-zA-Z0-9_].*)', r'\1\n\2'),
+            # Print statement followed by other code
+            (r'(print\([^)]*\))([a-zA-Z_][a-zA-Z0-9_].*)', r'\1\n\2'),
+            # DataFrame operation followed by other code
+            (r'(df\.[a-zA-Z_][a-zA-Z0-9_]*\([^)]*\))([a-zA-Z_][a-zA-Z0-9_].*)', r'\1\n\2'),
+            # Assignment followed by other code
+            (r'([a-zA-Z_][a-zA-Z0-9_]*\s*=\s*[^=\n]+)([a-zA-Z_][a-zA-Z0-9_].*)', r'\1\n\2'),
+        ]
+        
+        original_line = line
+        for pattern, replacement in patterns:
+            line = re.sub(pattern, replacement, line)
+            if line != original_line:
+                break
+        
+        # If the line is still very long and has multiple operations, try to split
+        if len(line) > 100 and any(op in line for op in ['.', '=', '(', ')', '[', ']']):
+            # Try to split on common Python operators and method calls
+            line = re.sub(r'(\.[a-zA-Z_][a-zA-Z0-9_]*\()', r'\n\1', line)
+            line = re.sub(r'(\))([a-zA-Z_][a-zA-Z0-9_])', r'\1\n\2', line)
+        
+        # Split the processed line if it contains newlines
+        if '\n' in line:
+            sub_lines = line.split('\n')
+            for sub_line in sub_lines:
+                sub_line = sub_line.strip()
+                if sub_line:
+                    processed_lines.append(sub_line)
+        else:
+            processed_lines.append(line)
+    
+    # Remove empty lines at the end
+    while processed_lines and not processed_lines[-1]:
+        processed_lines.pop()
+    
+    return processed_lines if processed_lines else ['']
+
+
 def export_to_ipynb():
     """Export notebook to .ipynb format with execution counts and outputs"""
     notebook = {
@@ -34,98 +115,27 @@ def export_to_ipynb():
     
     for cell in st.session_state.cells:
         content = cell.get('content', '')
-
-        if content:
-            # Normalize line endings
-            content = content.replace('\r\n', '\n').replace('\r', '\n')
-            
-            # Store original for fallback
-            original_content = content
-
-            # Fix stuck comments: # comment1# comment2# comment3
-            # This handles cases like "# Your data has been loaded!# Rows: 900"
-            while '#' in content and content.count('#') > 1:
-                new_content = re.sub(r'(#[^#\n]+)#', r'\1\n#', content)
-                if new_content == content:  # No more changes
-                    break
-                content = new_content
-            
-            # Fix comment immediately followed by code (no space)
-            # Handles: "# Show first 5 rowsdf.head()"
-            content = re.sub(r'(#[^\n]+)([a-zA-Z_])', r'\1\n\2', content)
-
-            # Heuristic check for mostly concatenated content
-            newline_count = content.count('\n')
-            is_mostly_concatenated = (
-                (newline_count == 0 and len(content) > 50)
-                or (newline_count > 0 and newline_count < len(content) / 100)
-            )
-
-            if is_mostly_concatenated:
-                # Comment followed by code patterns
-                content = re.sub(r'(#[^\n]+)\s+([a-zA-Z_][a-zA-Z0-9_]*\s*=)', r'\1\n\2', content)
-                content = re.sub(r'(#[^\n]+)\s+(print\s*\()', r'\1\n\2', content)
-                content = re.sub(r'(#[^\n]+)\s+(df\.)', r'\1\n\2', content)
-                content = re.sub(r'(#[^\n]+)\s+(filtered\s*=)', r'\1\n\2', content)
-                content = re.sub(r'(#[^\n]+)\s+(st\.)', r'\1\n\2', content)
-
-                # Assignment followed by assignment
-                content = re.sub(r'([a-zA-Z_][a-zA-Z0-9_]*\s*=\s*[^=\n]+)\s+([a-zA-Z_][a-zA-Z0-9_]*\s*=)', r'\1\n\2', content)
-                
-                # Assignment followed by function calls
-                content = re.sub(r'([a-zA-Z_][a-zA-Z0-9_]*\s*=\s*[^=\n]+)\s+(print\s*\()', r'\1\n\2', content)
-                content = re.sub(r'([a-zA-Z_][a-zA-Z0-9_]*\s*=\s*[^=\n]+)\s+(df\.)', r'\1\n\2', content)
-                
-                # Closing paren followed by code
-                content = re.sub(r'(\))\s+(print\s*\()', r'\1\n\2', content)
-                content = re.sub(r'(\))\s+(df\.)', r'\1\n\2', content)
-                content = re.sub(r'(\))\s+(filtered\.)', r'\1\n\2', content)
-                
-                # Pandas methods followed by code
-                content = re.sub(r'(\.head\(\))\s+([a-zA-Z_])', r'\1\n\2', content)
-                content = re.sub(r'(\.tail\(\))\s+([a-zA-Z_])', r'\1\n\2', content)
-                content = re.sub(r'(\.describe\(\))\s+([a-zA-Z_])', r'\1\n\2', content)
-                
-                # String literal followed by assignment
-                content = re.sub(r'(["\'])\s+([a-zA-Z_][a-zA-Z0-9_]*\s*=)', r'\1\n\2', content)
-                
-                # Consecutive print statements
-                content = re.sub(r'(print\([^)]*\))\s+(print\s*\()', r'\1\n\2', content)
-                
-                # DataFrame indexing followed by code
-                content = re.sub(r'(df\[[^\]]+\])\s+([a-zA-Z_])', r'\1\n\2', content)
-            
-            # Validate the formatted code
-            if not is_valid_python(content) and is_valid_python(original_content):
-                content = original_content
-            
-            # Clean up excessive blank lines
-            content = re.sub(r'\n{3,}', '\n\n', content)
-            
-            # Split into lines for JSON structure
-            source_lines = content.split('\n')
-            source = [line if line is not None else '' for line in source_lines]
-            
-            if not source:
-                source = ['']
-        else:
-            source = ['']
+        
+        # Use the new normalization function
+        source_lines = normalize_code_content(content)
         
         nb_cell = {
             "cell_type": "code",
             "execution_count": cell.get('execution_count'),
             "metadata": {},
             "outputs": [],
-            "source": source
+            "source": source_lines
         }
         
         # Handle execution output and errors
         if cell.get('executed') and not cell.get('error'):
             if cell.get('output'):
+                # Normalize output lines as well
+                output_lines = cell['output'].replace('\r\n', '\n').replace('\r', '\n').split('\n')
                 nb_cell["outputs"].append({
                     "output_type": "stream",
                     "name": "stdout",
-                    "text": cell['output'].split('\n')
+                    "text": output_lines
                 })
             
             if cell.get('dataframe') is not None:
@@ -143,13 +153,15 @@ def export_to_ipynb():
                     "metadata": {}
                 })
         elif cell.get('error'):
+            error_lines = cell['error'].replace('\r\n', '\n').replace('\r', '\n').split('\n')
             nb_cell["outputs"].append({
                 "output_type": "error",
                 "ename": "Exception",
                 "evalue": cell['error'],
-                "traceback": cell.get('error_traceback', '').split('\n') if cell.get('error_traceback') else []
+                "traceback": error_lines
             })
         
         notebook["cells"].append(nb_cell)
     
+    # FIXED: Return proper JSON string
     return json.dumps(notebook, indent=2)
