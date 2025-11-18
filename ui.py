@@ -30,12 +30,38 @@ def render_sidebar():
                         st.text(f"• {col}")
                 
                 if not st.session_state.file_loaded:
-                    file_code = f"""# Your data has been loaded!
-# Rows: {st.session_state.df.shape[0]}, Columns: {st.session_state.df.shape[1]}
+                    # Add imports cell
+                    imports_code = """# Import required libraries
+import pandas as pd
+import numpy as np
+import plotly.express as px
+import plotly.graph_objects as go"""
+                    add_cell(content=imports_code, position=0)
+                    
+                    # Add data loading cell
+                    file_extension = uploaded_file.name.split('.')[-1].lower()
+                    if file_extension == 'csv':
+                        load_code = f"""# Load the data from CSV file
+df = pd.read_csv('{uploaded_file.name}')
+
+# Display basic information
+print(f'✓ Loaded {{len(df)}} rows and {{len(df.columns)}} columns')
+print(f'\\nColumn names: {{list(df.columns)}}')
 
 # Show first 5 rows
 df.head()"""
-                    add_cell(content=file_code, position=0)
+                    else:
+                        load_code = f"""# Load the data from Excel file
+df = pd.read_excel('{uploaded_file.name}')
+
+# Display basic information
+print(f'✓ Loaded {{len(df)}} rows and {{len(df.columns)}} columns')
+print(f'\\nColumn names: {{list(df.columns)}}')
+
+# Show first 5 rows
+df.head()"""
+                    
+                    add_cell(content=load_code, position=1)
                     st.session_state.file_loaded = True
                     st.rerun()
 
