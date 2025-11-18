@@ -373,151 +373,344 @@ def initialize_session_state():
 CODE_TEMPLATES = {
     "📂 Load Data": {
         "Load CSV File": {
-            "code": "df = pd.read_csv('your_file.csv')\n\n print(f'✓ Loaded {len(df)} rows and {len(df.columns)} columns')\ndf.head()",
+            "code": [
+                "df = pd.read_csv('your_file.csv')",
+                "",
+                "print(f'✓ Loaded {len(df)} rows and {len(df.columns)} columns')",
+                "df.head()"
+            ],
             "description": "Load your data from a CSV file and preview it"
         },
         "Load Excel File": {
-            "code": "# Load data from Excel file\ndf = pd.read_excel('your_file.xlsx')\n\n# Show first 5 rows\nprint(f'✓ Loaded {len(df)} rows and {len(df.columns)} columns')\ndf.head()",
+            "code": [
+                "# Load data from Excel file",
+                "df = pd.read_excel('your_file.xlsx')",
+                "",
+                "# Show first 5 rows",
+                "print(f'✓ Loaded {len(df)} rows and {len(df.columns)} columns')",
+                "df.head()"
+            ],
             "description": "Load your data from an Excel file"
         }
     },
     "🔍 Explore Data": {
         "View First Rows": {
-            "code": "# View the first 10 rows of your data\ndf.head(10)",
+            "code": [
+                "# View the first 10 rows of your data",
+                "df.head(10)"
+            ],
             "description": "See the beginning of your dataset"
         },
         "View Last Rows": {
-            "code": "# View the last 10 rows of your data\ndf.tail(10)",
+            "code": [
+                "# View the last 10 rows of your data",
+                "df.tail(10)"
+            ],
             "description": "See the end of your dataset"
         },
         "Basic Information": {
-            "code": "# Get basic information about your data\nprint(f'Number of rows: {len(df)}')\nprint(f'Number of columns: {len(df.columns)}')\nprint(f'\\nColumn names:')\nprint(df.columns.tolist())\nprint(f'\\nData types:')\nprint(df.dtypes)",
+            "code": [
+                "# Get basic information about your data",
+                "print(f'Number of rows: {len(df)}')",
+                "print(f'Number of columns: {len(df.columns)}')",
+                "print(f'\\nColumn names:')",
+                "print(df.columns.tolist())",
+                "print(f'\\nData types:')",
+                "print(df.dtypes)"
+            ],
             "description": "See shape, columns, and data types"
         },
         "Check Missing Data": {
-            "code": "# Check for missing values in each column\nmissing = df.isnull().sum()\nprint('Missing values per column:')\nprint(missing[missing > 0])\nprint(f'\\nTotal missing: {df.isnull().sum().sum()}')",
+            "code": [
+                "# Check for missing values in each column",
+                "missing = df.isnull().sum()",
+                "print('Missing values per column:')",
+                "print(missing[missing > 0])",
+                "print(f'\\nTotal missing: {df.isnull().sum().sum()}')"
+            ],
             "description": "Find which columns have missing data"
         },
         "Summary Statistics": {
-            "code": "# Get statistical summary of numeric columns\ndf.describe()",
+            "code": [
+                "# Get statistical summary of numeric columns",
+                "df.describe()"
+            ],
             "description": "See mean, min, max, etc. for numbers"
         }
     },
     "📊 Analyze Data": {
         "Count Values": {
-            "code": "# Count how many times each value appears\n# Change 'column_name' to your actual column\ndf['column_name'].value_counts()",
+            "code": [
+                "# Count how many times each value appears",
+                "# Change 'column_name' to your actual column",
+                "df['column_name'].value_counts()"
+            ],
             "description": "Count occurrences of each unique value"
         },
         "Calculate Average": {
-            "code": "# Calculate the average (mean) of a column\n# Change 'column_name' to your actual column\naverage = df['column_name'].mean()\nprint(f'Average: {average:.2f}')",
+            "code": [
+                "# Calculate the average (mean) of a column",
+                "# Change 'column_name' to your actual column",
+                "average = df['column_name'].mean()",
+                "print(f'Average: {average:.2f}')"
+            ],
             "description": "Find the average of a numeric column"
         },
         "Find Maximum/Minimum": {
-            "code": "# Find the highest and lowest values\n# Change 'column_name' to your actual column\nprint(f'Maximum: {df[\"column_name\"].max()}')\nprint(f'Minimum: {df[\"column_name\"].min()}')",
+            "code": [
+                "# Find the highest and lowest values",
+                "# Change 'column_name' to your actual column",
+                "print(f'Maximum: {df[\"column_name\"].max()}')",
+                "print(f'Minimum: {df[\"column_name\"].min()}')"
+            ],
             "description": "Find the highest and lowest values"
         },
         "Group and Average": {
-            "code": "# Calculate average by group\n# Change 'group_column' and 'value_column' to your columns\ngrouped = df.groupby('group_column')['value_column'].mean()\nprint(grouped)",
+            "code": [
+                "# Calculate average by group",
+                "# Change 'group_column' and 'value_column' to your columns",
+                "grouped = df.groupby('group_column')['value_column'].mean()",
+                "print(grouped)"
+            ],
             "description": "Calculate averages for each category"
         },
         "Correlation Matrix": {
-            "code": "# See how numeric columns relate to each other\ncorr = df.corr(numeric_only=True)\nprint(corr)",
+            "code": [
+                "# See how numeric columns relate to each other",
+                "corr = df.corr(numeric_only=True)",
+                "print(corr)"
+            ],
             "description": "Find relationships between numbers"
         }
     },
     "🧹 Clean Data": {
         "Remove Missing Values": {
-            "code": "# Remove rows with any missing data\ndf_clean = df.dropna()\nprint(f'Removed {len(df) - len(df_clean)} rows with missing data')\nprint(f'New dataset has {len(df_clean)} rows')\ndf = df_clean",
+            "code": [
+                "# Remove rows with any missing data",
+                "df_clean = df.dropna()",
+                "print(f'Removed {len(df) - len(df_clean)} rows with missing data')",
+                "print(f'New dataset has {len(df_clean)} rows')",
+                "df = df_clean"
+            ],
             "description": "Delete rows that have empty cells"
         },
         "Fill Missing Values": {
-            "code": "# Replace missing values with the average\n# Change 'column_name' to your actual column\nmean_value = df['column_name'].mean()\ndf['column_name'].fillna(mean_value, inplace=True)\nprint(f'✓ Filled missing values with average: {mean_value:.2f}')",
+            "code": [
+                "# Replace missing values with the average",
+                "# Change 'column_name' to your actual column",
+                "mean_value = df['column_name'].mean()",
+                "df['column_name'].fillna(mean_value, inplace=True)",
+                "print(f'✓ Filled missing values with average: {mean_value:.2f}')"
+            ],
             "description": "Replace empty cells with average value"
         },
         "Remove Duplicates": {
-            "code": "# Remove duplicate rows\noriginal_count = len(df)\ndf = df.drop_duplicates()\nremoved = original_count - len(df)\nprint(f'✓ Removed {removed} duplicate rows')\nprint(f'New dataset has {len(df)} rows')",
+            "code": [
+                "# Remove duplicate rows",
+                "original_count = len(df)",
+                "df = df.drop_duplicates()",
+                "removed = original_count - len(df)",
+                "print(f'✓ Removed {removed} duplicate rows')",
+                "print(f'New dataset has {len(df)} rows')"
+            ],
             "description": "Delete rows that appear more than once"
         },
         "Rename Column": {
-            "code": "# Rename a column to a better name\n# Change 'old_name' and 'new_name' to your names\ndf.rename(columns={'old_name': 'new_name'}, inplace=True)\nprint('✓ Column renamed successfully')\nprint(f'Columns: {df.columns.tolist()}')",
+            "code": [
+                "# Rename a column to a better name",
+                "# Change 'old_name' and 'new_name' to your names",
+                "df.rename(columns={'old_name': 'new_name'}, inplace=True)",
+                "print('✓ Column renamed successfully')",
+                "print(f'Columns: {df.columns.tolist()}')"
+            ],
             "description": "Give a column a new, clearer name"
         },
         "Delete Column": {
-            "code": "# Remove a column you don't need\n# Change 'column_name' to the column you want to delete\ndf.drop('column_name', axis=1, inplace=True)\nprint('✓ Column deleted')\nprint(f'Remaining columns: {df.columns.tolist()}')",
+            "code": [
+                "# Remove a column you don't need",
+                "# Change 'column_name' to the column you want to delete",
+                "df.drop('column_name', axis=1, inplace=True)",
+                "print('✓ Column deleted')",
+                "print(f'Remaining columns: {df.columns.tolist()}')"
+            ],
             "description": "Remove a column from your dataset"
         }
     },
     "🔎 Filter Data": {
         "Filter by Value": {
-            "code": "# Keep only rows where a condition is true\n# Change 'column_name' and 'value' to your needs\nfiltered = df[df['column_name'] == 'value']\nprint(f'Found {len(filtered)} matching rows')\nfiltered.head()",
+            "code": [
+                "# Keep only rows where a condition is true",
+                "# Change 'column_name' and 'value' to your needs",
+                "filtered = df[df['column_name'] == 'value']",
+                "print(f'Found {len(filtered)} matching rows')",
+                "filtered.head()"
+            ],
             "description": "Show only rows that match a condition"
         },
         "Filter Numbers": {
-            "code": "# Keep rows where number is greater than a value\n# Change 'column_name' and 50 to your needs\nfiltered = df[df['column_name'] > 50]\nprint(f'Found {len(filtered)} rows where value > 50')\nfiltered.head()",
+            "code": [
+                "# Keep rows where number is greater than a value",
+                "# Change 'column_name' and 50 to your needs",
+                "filtered = df[df['column_name'] > 50]",
+                "print(f'Found {len(filtered)} rows where value > 50')",
+                "filtered.head()"
+            ],
             "description": "Filter rows by numeric comparison"
         },
         "Filter Multiple Conditions": {
-            "code": "# Filter with multiple conditions (AND)\n# Change column names and values to your needs\nfiltered = df[(df['column1'] > 50) & (df['column2'] == 'value')]\nprint(f'Found {len(filtered)} matching rows')\nfiltered.head()",
+            "code": [
+                "# Filter with multiple conditions (AND)",
+                "# Change column names and values to your needs",
+                "filtered = df[(df['column1'] > 50) & (df['column2'] == 'value')]",
+                "print(f'Found {len(filtered)} matching rows')",
+                "filtered.head()"
+            ],
             "description": "Filter using two or more conditions"
         },
         "Filter by Text": {
-            "code": "# Find rows where text contains certain words\n# Change 'column_name' and 'keyword' to your needs\nfiltered = df[df['column_name'].str.contains('keyword', case=False, na=False)]\nprint(f'Found {len(filtered)} rows containing \"keyword\"')\nfiltered.head()",
+            "code": [
+                "# Find rows where text contains certain words",
+                "# Change 'column_name' and 'keyword' to your needs",
+                "filtered = df[df['column_name'].str.contains('keyword', case=False, na=False)]",
+                "print(f'Found {len(filtered)} rows containing \"keyword\"')",
+                "filtered.head()"
+            ],
             "description": "Search for text within a column"
         }
     },
     "🔧 Transform Data": {
         "Create New Column": {
-            "code": "# Create a new column from existing ones\n# Example: combine first and last name\ndf['full_name'] = df['first_name'] + ' ' + df['last_name']\nprint('✓ New column created')\ndf.head()",
+            "code": [
+                "# Create a new column from existing ones",
+                "# Example: combine first and last name",
+                "df['full_name'] = df['first_name'] + ' ' + df['last_name']",
+                "print('✓ New column created')",
+                "df.head()"
+            ],
             "description": "Add a new column based on other columns"
         },
         "Calculate New Column": {
-            "code": "# Create column with calculation\n# Example: calculate total price\ndf['total'] = df['price'] * df['quantity']\nprint('✓ Calculated new column')\ndf.head()",
+            "code": [
+                "# Create column with calculation",
+                "# Example: calculate total price",
+                "df['total'] = df['price'] * df['quantity']",
+                "print('✓ Calculated new column')",
+                "df.head()"
+            ],
             "description": "Add a column with mathematical calculation"
         },
         "Sort Data": {
-            "code": "# Sort data by a column\n# Change 'column_name' to your column\ndf_sorted = df.sort_values('column_name', ascending=False)\nprint('✓ Data sorted from highest to lowest')\ndf_sorted.head()",
+            "code": [
+                "# Sort data by a column",
+                "# Change 'column_name' to your column",
+                "df_sorted = df.sort_values('column_name', ascending=False)",
+                "print('✓ Data sorted from highest to lowest')",
+                "df_sorted.head()"
+            ],
             "description": "Arrange rows in order by a column"
         },
         "Convert to Categories": {
-            "code": "# Create categories from numbers\n# Example: convert age to age groups\ndf['age_group'] = pd.cut(df['age'], \n                          bins=[0, 18, 30, 50, 100],\n                          labels=['0-18', '19-30', '31-50', '50+'])\nprint('✓ Created age groups')\ndf['age_group'].value_counts()",
+            "code": [
+                "# Create categories from numbers",
+                "# Example: convert age to age groups",
+                "df['age_group'] = pd.cut(df['age'],",
+                "                          bins=[0, 18, 30, 50, 100],",
+                "                          labels=['0-18', '19-30', '31-50', '50+'])",
+                "print('✓ Created age groups')",
+                "df['age_group'].value_counts()"
+            ],
             "description": "Group numbers into categories (bins)"
         }
     },
     "📈 Visualize Data": {
         "Bar Chart": {
-            "code": "# Create a bar chart\n# Change column names to your data\nfig = px.bar(df, \n             x='category_column', \n             y='value_column',\n             title='My Bar Chart')\nst.plotly_chart(fig, use_container_width=True)",
+            "code": [
+                "# Create a bar chart",
+                "# Change column names to your data",
+                "fig = px.bar(df,",
+                "             x='category_column',",
+                "             y='value_column',",
+                "             title='My Bar Chart')",
+                "st.plotly_chart(fig, use_container_width=True)"
+            ],
             "description": "Compare values across categories"
         },
         "Line Chart": {
-            "code": "# Create a line chart\n# Good for showing trends over time\nfig = px.line(df, \n              x='date_column', \n              y='value_column',\n              title='Trend Over Time')\nst.plotly_chart(fig, use_container_width=True)",
+            "code": [
+                "# Create a line chart",
+                "# Good for showing trends over time",
+                "fig = px.line(df,",
+                "              x='date_column',",
+                "              y='value_column',",
+                "              title='Trend Over Time')",
+                "st.plotly_chart(fig, use_container_width=True)"
+            ],
             "description": "Show trends and changes over time"
         },
         "Scatter Plot": {
-            "code": "# Create a scatter plot\n# See relationship between two numbers\nfig = px.scatter(df, \n                 x='column1', \n                 y='column2',\n                 title='Relationship Between Two Variables')\nst.plotly_chart(fig, use_container_width=True)",
+            "code": [
+                "# Create a scatter plot",
+                "# See relationship between two numbers",
+                "fig = px.scatter(df,",
+                "                 x='column1',",
+                "                 y='column2',",
+                "                 title='Relationship Between Two Variables')",
+                "st.plotly_chart(fig, use_container_width=True)"
+            ],
             "description": "Explore relationships between two numbers"
         },
         "Histogram": {
-            "code": "# Create a histogram\n# Shows the distribution of values\nfig = px.histogram(df, \n                   x='column_name',\n                   nbins=30,\n                   title='Distribution of Values')\nst.plotly_chart(fig, use_container_width=True)",
+            "code": [
+                "# Create a histogram",
+                "# Shows the distribution of values",
+                "fig = px.histogram(df,",
+                "                   x='column_name',",
+                "                   nbins=30,",
+                "                   title='Distribution of Values')",
+                "st.plotly_chart(fig, use_container_width=True)"
+            ],
             "description": "See how values are distributed"
         },
         "Pie Chart": {
-            "code": "# Create a pie chart\n# Shows proportions of a whole\nvalue_counts = df['category_column'].value_counts()\nfig = px.pie(values=value_counts.values,\n             names=value_counts.index,\n             title='Distribution by Category')\nst.plotly_chart(fig, use_container_width=True)",
+            "code": [
+                "# Create a pie chart",
+                "# Shows proportions of a whole",
+                "value_counts = df['category_column'].value_counts()",
+                "fig = px.pie(values=value_counts.values,",
+                "             names=value_counts.index,",
+                "             title='Distribution by Category')",
+                "st.plotly_chart(fig, use_container_width=True)"
+            ],
             "description": "Show proportions and percentages"
         },
         "Box Plot": {
-            "code": "# Create a box plot\n# Shows data distribution and outliers\nfig = px.box(df, \n             y='column_name',\n             title='Box Plot')\nst.plotly_chart(fig, use_container_width=True)",
+            "code": [
+                "# Create a box plot",
+                "# Shows data distribution and outliers",
+                "fig = px.box(df,",
+                "             y='column_name',",
+                "             title='Box Plot')",
+                "st.plotly_chart(fig, use_container_width=True)"
+            ],
             "description": "Identify outliers and data spread"
         }
     },
     "💾 Save Results": {
         "Save to CSV": {
-            "code": "# Save your data to a CSV file\ndf.to_csv('output_data.csv', index=False)\nprint('✓ Data saved as output_data.csv')",
+            "code": [
+                "# Save your data to a CSV file",
+                "df.to_csv('output_data.csv', index=False)",
+                "print('✓ Data saved as output_data.csv')"
+            ],
             "description": "Export your data to a CSV file"
         },
         "Save to Excel": {
-            "code": "# Save your data to an Excel file\ndf.to_excel('output_data.xlsx', index=False)\nprint('✓ Data saved as output_data.xlsx')",
+            "code": [
+                "# Save your data to an Excel file",
+                "df.to_excel('output_data.xlsx', index=False)",
+                "print('✓ Data saved as output_data.xlsx')"
+            ],
             "description": "Export your data to an Excel file"
         }
     }
 }
-
