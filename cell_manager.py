@@ -13,14 +13,16 @@ def add_cell(content="# Write your code here\n", position=None):
     if isinstance(content, list):
         # Convert list to string for storage
         content_str = '\n'.join(content)
+        content_list = content
     else:
         content_str = content
+        content_list = content.split('\n')
     
     new_cell = {
         'id': st.session_state.cell_counter,
         'type': 'code',
         'content': content_str,  # Store as string for execution
-        'content_list': content if isinstance(content, list) else content.split('\n'),  # Store list version for export
+        'content_list': content_list,  # Store list version for export
         'output': None,
         'executed': False,
         'execution_count': None,
