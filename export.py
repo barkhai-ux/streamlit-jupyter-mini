@@ -1,8 +1,5 @@
 import streamlit as st
 import json
-import re
-import ast
-
 
 def export_to_ipynb():
     """Simple export function that works with list-based code storage"""
@@ -24,13 +21,11 @@ def export_to_ipynb():
     }
     
     for cell in st.session_state.get('cells', []):
-        content = cell.get('content', '')
-        
-        # If content is stored as list, use it directly
-        if isinstance(content, list):
-            source = content
+        # Use content_list if available, otherwise split content by newlines
+        if 'content_list' in cell and cell['content_list']:
+            source = cell['content_list']
         else:
-            # Fallback: split by newlines
+            content = cell.get('content', '')
             source = content.split('\n') if content else ['']
         
         nb_cell = {
